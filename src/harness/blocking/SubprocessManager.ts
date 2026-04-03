@@ -119,13 +119,18 @@ export class SubprocessManager {
         }
       })
 
+      // Register immediately so getActiveCount is accurate
+      this.processes.set(handle.pid, handle)
+
+      // Register immediately so getActiveCount is accurate
+      this.processes.set(handle.pid, handle)
+
       setTimeout(() => {
         if (!settled && handle.status === 'failed') {
           settled = true
           reject(new Error('Failed to spawn process'))
         } else if (!settled) {
           settled = true
-          this.processes.set(handle.pid, handle)
           resolve(handle)
         }
       }, 10)
