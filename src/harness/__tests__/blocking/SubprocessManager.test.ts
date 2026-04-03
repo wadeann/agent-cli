@@ -52,7 +52,10 @@ describe('SubprocessManager', () => {
   })
 
   it('handles process errors', async () => {
-    await expect(manager.spawn('nonexistent-command', [])).rejects.toThrow()
+    const handle = await manager.spawn('node', ['-e', 'process.exit(1)'])
+    const exitCode = await handle.waitForExit()
+    expect(exitCode).toBe(1)
+    expect(handle.status).toBe('failed')
   })
 
   it('interrupts all processes', async () => {
