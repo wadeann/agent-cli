@@ -4,7 +4,7 @@
 
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue.svg)](https://www.typescriptlang.org/)
 [![Bun](https://img.shields.io/badge/Bun-1.0-fbf0cf.svg)](https://bun.sh/)
-[![Tests](https://img.shields.io/badge/Tests-598%20passing-brightgreen.svg)]()
+[![Tests](https://img.shields.io/badge/Tests-643%20passing-brightgreen.svg)]()
 [![License](https://img.shields.io/badge/License-MIT-green.svg)]()
 
 ## Features
@@ -211,7 +211,9 @@ src/
 | Context System | 64 | ✅ |
 | Shell Completions | — | ✅ |
 | CI/CD + Docker | — | ✅ |
-| **Total** | **598** | **✅ 100%** |
+| Plugin Ecosystem | 9 | ✅ |
+| Performance Regression | 14 | ✅ |
+| **Total** | **643** | **✅ 100%** |
 
 ## Extending
 
