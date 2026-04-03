@@ -1,7 +1,6 @@
 // 云同步管理器 - 远程内存同步、配置备份、团队共享
 
 import type { SyncConfig, SyncEntry, SyncResult, SyncProvider, SyncDirection } from './types.js'
-import { DEFAULT_MEMORY_CONFIG } from '../memory/types.js'
 
 export class SyncManager {
   private config: SyncConfig
