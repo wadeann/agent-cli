@@ -1,18 +1,17 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { ProjectContextManager } from '../ProjectContext.js'
-import { existsSync, rmSync, mkdirSync, writeFileSync } from 'fs'
-import { join } from 'path'
-import { tmpdir } from 'os'
+import { existsSync, rmSync, mkdirSync, writeFileSync, mkdtempSync } from 'fs'
+import { join, tmpdir } from 'path'
+import { tmpdir as osTmpdir } from 'os'
 
 describe('ProjectContextManager', () => {
   let projectDir: string
   let saveDir: string
 
   beforeEach(() => {
-    projectDir = join(tmpdir(), `project-${Date.now()}`)
-    saveDir = join(tmpdir(), `context-${Date.now()}`)
-    mkdirSync(projectDir, { recursive: true })
-    mkdirSync(saveDir, { recursive: true })
+    const suffix = Math.random().toString(36).slice(2, 10)
+    projectDir = mkdtempSync(join(osTmpdir(), `project-${suffix}-`))
+    saveDir = mkdtempSync(join(osTmpdir(), `context-${suffix}-`))
     writeFileSync(join(projectDir, 'index.ts'), 'console.log("hello")')
     mkdirSync(join(projectDir, 'src'), { recursive: true })
     writeFileSync(join(projectDir, 'src', 'main.ts'), 'export const main = () => {}')
