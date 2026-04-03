@@ -4,7 +4,7 @@
 
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue.svg)](https://www.typescriptlang.org/)
 [![Bun](https://img.shields.io/badge/Bun-1.0-fbf0cf.svg)](https://bun.sh/)
-[![Tests](https://img.shields.io/badge/Tests-513%20passing-brightgreen.svg)]()
+[![Tests](https://img.shields.io/badge/Tests-598%20passing-brightgreen.svg)]()
 [![License](https://img.shields.io/badge/License-MIT-green.svg)]()
 
 ## Features
@@ -143,6 +143,13 @@ src/
 │   └── TerminalRenderer  # Terminal output rendering
 ├── security/         # Security hardening
 │   └── SecurityValidator # Input validation, rate limiting
+├── context/          # Self-improving context system
+│   ├── ProjectContext      # Persistent memory across sessions
+│   ├── SmartContext        # Context-aware compaction
+│   ├── InteractiveRefiner  # Try-fail-adjust feedback loop
+│   └── SelfCorrectingRecovery # Auto error analysis + fix suggestions
+├── sync/             # Cloud sync
+│   └── SyncManager       # Bidirectional sync, conflict resolution
 └── optimization/     # Performance
     └── PerformanceOptimizer # LRU cache, dedup, batch, metrics
 ```
@@ -198,8 +205,13 @@ src/
 | Anti-Blocking | 59 | ✅ |
 | Multi-Agent | 29 | ✅ |
 | Security | 23 | ✅ |
-| Benchmarks | 10 | ✅ |
-| **Total** | **513** | **✅ 100%** |
+| Cloud Sync | 17 | ✅ |
+| Benchmarks + E2E | 21 | ✅ |
+| Error Handling | 20 | ✅ |
+| Context System | 64 | ✅ |
+| Shell Completions | — | ✅ |
+| CI/CD + Docker | — | ✅ |
+| **Total** | **598** | **✅ 100%** |
 
 ## Extending
 
