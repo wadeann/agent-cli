@@ -1,270 +1,479 @@
-# Agent CLI 用户指南
+# Agent CLI — User Guide
 
-## 项目概述
-
-Agent CLI 是一个基于 Bun + TypeScript 的 AI Agent 命令行工具，支持多模型接入、智能资源管理、工具编排、插件系统和 MCP 集成。
-
-## 环境要求
-
-- **Bun** >= 1.0
-- **Node.js** >= 20 (如果使用 node 运行)
-
-## 安装
+## 1. Quick Start
 
 ```bash
+# Clone and install
+git clone https://github.com/wadeann/agent-cli.git
 cd agent-cli
 bun install
-```
 
-## 配置
-
-首次运行时会自动创建 `~/.agent-cli/config.json`。你也可以手动创建：
-
-```bash
+# Configure your API keys
 mkdir -p ~/.agent-cli
 cat > ~/.agent-cli/config.json << 'EOF'
 {
   "defaultProvider": "anthropic",
+  "defaultModel": "claude-sonnet-4-5-20251120",
   "providers": {
-    "anthropic": {
-      "apiKey": "your-anthropic-api-key"
-    },
-    "openai": {
-      "apiKey": "your-openai-api-key"
-    }
+    "anthropic": { "apiKey": "sk-ant-..." },
+    "openai": { "apiKey": "sk-..." }
+  },
+  "modelPreferences": {
+    "fast": "claude-haiku-3-5-20250520",
+    "balanced": "claude-sonnet-4-5-20251120",
+    "power": "claude-opus-4-5-20251120"
   }
 }
 EOF
 ```
 
-### 配置字段说明
+## 2. Basic Usage
 
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| `defaultProvider` | string | 默认使用的 provider 名称 (`anthropic` / `openai`) |
-| `providers.anthropic.apiKey` | string | Anthropic API Key |
-| `providers.openai.apiKey` | string | OpenAI API Key |
-| `providers.*.baseUrl` | string | 自定义 API 端点 (可选) |
-| `providers.*.maxRetries` | number | 最大重试次数 (默认 3) |
-| `providers.*.timeout` | number | 请求超时毫秒数 (默认 600000) |
-
-## 快速开始
-
-### 1. 发送聊天消息
-
+### Single-shot Chat
 ```bash
-# 使用默认 provider 和模型
+# Use default model
 bun run src/cli/index.ts chat "Explain TypeScript generics"
 
-# 指定模型
-bun run src/cli/index.ts chat "Write a Python script" -m claude-sonnet-4-5-20251120
+# Specify model
+bun run src/cli/index.ts chat "Write a Python script" -m gpt-4o
 
-# 使用 OpenAI
-bun run src/cli/index.ts chat "What is Rust?" -m gpt-4o
+# Use model profile
+bun run src/cli/index.ts chat "Quick question" -p fast
+bun run src/cli/index.ts chat "Complex architecture" -p power
 ```
 
-### 2. 查看配置
-
+### Configuration
 ```bash
+# View current config
 bun run src/cli/index.ts config
-```
 
-### 3. 列出可用模型
+# Change default model
+bun run src/cli/index.ts config set model gpt-4o
 
-```bash
+# Change default provider
+bun run src/cli/index.ts config set provider openai
+
+# Set API keys
+bun run src/cli/index.ts config set provider.anthropic.apiKey sk-ant-...
+bun run src/cli/index.ts config set provider.openai.apiKey sk-...
+
+# Set base URL (for proxies / compatible APIs)
+bun run src/cli/index.ts config set provider.openai.baseUrl https://your-proxy.com/v1
+bun run src/cli/index.ts config set provider.anthropic.baseUrl https://your-proxy.com/anthropic
+
+# Set provider timeout (milliseconds)
+bun run src/cli/index.ts config set provider.anthropic.timeout 120000
+
+# Set provider max retries
+bun run src/cli/index.ts config set provider.openai.maxRetries 5
+
+# Change profile models
+bun run src/cli/index.ts config set model.fast gpt-4o-mini
+bun run src/cli/index.ts config set model.power claude-opus-4-5-20251120
+
+# List available models
 bun run src/cli/index.ts models
+bun run src/cli/index.ts models --json
 ```
 
-输出示例：
-```
-=== anthropic ===
-  claude-opus-4-5-20251120 - Claude Opus 4.5
-    Context: 200,000 tokens
-    Pricing: $15/M in, $75/M out
-  claude-sonnet-4-5-20251120 - Claude Sonnet 4.5
-    Context: 200,000 tokens
-    Pricing: $3/M in, $15/M out
-  claude-haiku-3-5-20250520 - Claude Haiku 3.5
-    Context: 200,000 tokens
-    Pricing: $0.8/M in, $4/M out
+### Example config.json
 
-=== openai ===
-  gpt-4o - GPT-4o
-    Context: 128,000 tokens
-    Pricing: $5/M in, $15/M out
-  gpt-4o-mini - GPT-4o Mini
-    Context: 128,000 tokens
-    Pricing: $0.15/M in, $0.6/M out
-  o1-preview - O1 Preview
-    Context: 128,000 tokens
-    Pricing: $15/M in, $60/M out
-```
-
-### 4. 查看帮助
-
-```bash
-bun run src/cli/index.ts --help
-```
-
-## 可用模型
-
-### Anthropic
-
-| 模型 ID | 上下文窗口 | 最大输出 | 能力 |
-|---------|-----------|---------|------|
-| `claude-opus-4-5-20251120` | 200K | 8K | vision, tools, thinking |
-| `claude-sonnet-4-5-20251120` | 200K | 8K | vision, tools, thinking |
-| `claude-haiku-3-5-20250520` | 200K | 8K | vision, tools |
-
-### OpenAI
-
-| 模型 ID | 上下文窗口 | 最大输出 | 能力 |
-|---------|-----------|---------|------|
-| `gpt-4o` | 128K | 16K | vision, tools |
-| `gpt-4o-mini` | 128K | 16K | vision, tools |
-| `o1-preview` | 128K | 32K | thinking |
-
-## 开发命令
-
-```bash
-bun run dev          # 运行 CLI (开发模式)
-bun run build        # 构建为二进制
-bun run typecheck    # TypeScript 类型检查
-bun run test         # 运行所有测试
-bun run test:watch   # 监听模式运行测试
-```
-
-## 架构概览
-
-```
-src/
-├── cli/              # CLI 入口 (commander.js)
-├── providers/        # 模型抽象层
-│   ├── base/         # Provider 接口和类型
-│   ├── anthropic/    # Anthropic Provider
-│   ├── openai/       # OpenAI Provider
-│   └── factory/      # Provider 工厂
-├── tools/            # 工具系统
-│   ├── file/         # 文件工具 (Read/Write/Edit)
-│   ├── search/       # 搜索工具 (Grep/Glob)
-│   ├── execution/    # 执行工具 (Bash)
-│   └── orchestrator/ # 工具编排引擎
-├── harness/          # 资源管理
-│   ├── TaskEstimator     # 任务复杂度估算
-│   ├── ResourceAllocator # 动态资源分配
-│   └── CostTracker       # 成本追踪
-├── tasks/            # 任务 DAG 系统
-│   ├── TaskGraph         # 任务图管理
-│   ├── TaskScheduler     # 任务调度器
-│   └── CheckpointManager # 检查点管理
-├── plugins/          # 插件系统
-│   ├── PluginManager     # 插件管理器
-│   ├── PluginLoader      # 插件加载器
-│   └── ExtensionPoints   # 扩展点系统
-├── mcp/              # MCP 集成
-│   ├── MCPClient         # MCP 客户端
-│   ├── MCPServerManager  # 服务器管理器
-│   └── ToolAdapter       # MCP 工具适配器
-└── ui/               # 终端 UI
-    ├── UIManager         # UI 状态管理
-    └── TerminalRenderer  # 终端渲染器
-```
-
-## 测试覆盖
-
-| 模块 | 测试数 | 状态 |
-|------|--------|------|
-| Provider 层 | 16 | ✅ |
-| CLI 框架 | 4 | ✅ |
-| 工具集 | 8 | ✅ |
-| 资源管理 | 13 | ✅ |
-| 任务 DAG | 66 | ✅ |
-| 插件系统 | 55 | ✅ |
-| MCP 集成 | 43 | ✅ |
-| 终端 UI | 39 | ✅ |
-| **总计** | **240** | **✅ 100%** |
-
-## 扩展开发
-
-### 添加新的 Provider
-
-1. 在 `src/providers/` 下创建新目录
-2. 继承 `BaseProvider` 实现接口
-3. 在 `ProviderFactory` 中注册
-
-```typescript
-// src/providers/google/GeminiProvider.ts
-import { BaseProvider } from '../base/Provider.js'
-
-export class GeminiProvider extends BaseProvider {
-  readonly providerName = 'google'
-  // ... 实现接口方法
-}
-```
-
-### 添加新的工具
-
-```typescript
-// src/tools/custom/MyTool.ts
-import { BaseTool } from '../base.js'
-
-export class MyTool extends BaseTool {
-  readonly name = 'my-tool'
-  readonly description = 'Does something useful'
-  readonly category = 'execution'
-  readonly readOnly = false
-  readonly dangerous = false
-  readonly inputSchema = { /* JSON Schema */ }
-
-  async execute(input: unknown, context: ExecutionContext) {
-    // 实现工具逻辑
-    return this.success('result')
+```json
+{
+  "defaultProvider": "openai",
+  "defaultModel": "gpt-4o",
+  "providers": {
+    "anthropic": {
+      "apiKey": "sk-ant-...",
+      "baseUrl": "",
+      "timeout": 120000,
+      "maxRetries": 3
+    },
+    "openai": {
+      "apiKey": "sk-...",
+      "baseUrl": "https://your-proxy.com/v1",
+      "timeout": 60000,
+      "maxRetries": 3
+    }
+  },
+  "modelPreferences": {
+    "fast": "gpt-4o-mini",
+    "balanced": "gpt-4o",
+    "power": "claude-opus-4-5-20251120"
   }
 }
 ```
 
-### 添加插件
+## 3. Interactive TUI Mode
+
+```bash
+# Start interactive session
+bun run src/cli/index.ts repl
+
+# Start with specific model
+bun run src/cli/index.ts repl -m gpt-4o
+```
+
+### TUI Slash Commands
+```
+/help              Show available commands
+/clear             Clear conversation history
+/memory [query]    Search or view memory stats
+/compact           Compact conversation context
+/cost              Show current session cost
+/model <id>        Switch model
+/models            List available models
+/exit              Exit the REPL
+```
+
+## 4. Session Management
+
+Sessions are automatically saved to `~/.agent-cli/sessions/`:
 
 ```typescript
-import type { PluginV2 } from './plugins/types.js'
+import { SessionManager } from './src/cli/SessionManager.js'
+
+const manager = new SessionManager()
+await manager.initialize()
+
+// Create new session
+const session = manager.createSession('My Project')
+
+// Add messages
+manager.addMessage('user', 'Help me build a CLI tool')
+manager.addMessage('assistant', 'I can help with that...')
+
+// List sessions
+const sessions = manager.listSessions()
+
+// Switch session
+manager.switchSession('session-id')
+
+// Get history
+const history = manager.getSessionHistory(10)
+```
+
+## 5. Memory System
+
+The 4-layer memory system persists across sessions:
+
+```typescript
+import { MemoryManager } from './src/memory/MemoryManager.js'
+
+const memory = new MemoryManager()
+
+// Add entries to different layers
+memory.addEntry('user', 'Preference', 'Prefers TypeScript', { tags: ['coding'] })
+memory.addEntry('feedback', 'Style', 'Keep responses concise')
+memory.addEntry('project', 'Status', 'Building CLI tool')
+memory.addEntry('reference', 'API', 'https://api.example.com')
+
+// Search memory
+const results = memory.search('TypeScript')
+// Returns: [{ entry, score, matchedLayer }]
+
+// Get relevant context for prompts
+const context = memory.getRelevantContext('CLI tool')
+
+// Save to disk
+await memory.saveToDisk()
+
+// Load from disk
+memory.loadFromDisk()
+```
+
+## 6. Multi-Agent Collaboration
+
+```typescript
+import { AgentCoordinator } from './src/agents/AgentCoordinator.js'
+
+const coordinator = new AgentCoordinator()
+
+// Register agents with roles
+coordinator.registerAgent({
+  id: 'planner',
+  name: 'Planner',
+  role: 'planner',
+  capabilities: ['plan', 'analyze'],
+  systemPrompt: 'You are a technical planner.'
+}, async (task) => {
+  // Return plan
+  return 'Step 1: Design API\nStep 2: Implement\nStep 3: Test'
+})
+
+coordinator.registerAgent({
+  id: 'coder',
+  name: 'Coder',
+  role: 'coder',
+  capabilities: ['code'],
+  systemPrompt: 'You are a senior developer.'
+}, async (task) => {
+  return 'Code implemented'
+})
+
+// Chain agents in sequence
+const result = await coordinator.collaborate(
+  ['planner', 'coder'],
+  'Build a REST API'
+)
+
+console.log(result.success)    // true
+console.log(result.steps)      // 2
+console.log(result.duration)   // ms
+console.log(result.output)     // Final output
+```
+
+## 7. Context Compaction
+
+Prevent context window overflow:
+
+```typescript
+import { CompactionEngine } from './src/compaction/CompactionEngine.js'
+
+const engine = new CompactionEngine()
+
+// Check if compaction needed
+if (engine.shouldAutoCompact(messages, 200000)) {
+  const memoryContext = memory.getRelevantContext('current task')
+  
+  // Compact with session memory
+  const result = engine.compactWithSessionMemory(
+    messages,
+    memoryContext,
+    200000
+  )
+  
+  console.log(`Saved ${result.tokensSaved} tokens`)
+}
+```
+
+## 8. Anti-Blocking System
+
+### Subprocess Management
+```typescript
+import { SubprocessManager } from './src/harness/blocking/SubprocessManager.js'
+
+const procManager = new SubprocessManager(5)
+
+// Spawn with timeout
+const handle = await procManager.spawn('npm', ['install'], {
+  timeoutMs: 60000,
+  maxOutputBytes: 1024 * 1024
+})
+
+await handle.waitForExit()
+console.log(handle.status) // 'completed' | 'failed' | 'timeout' | 'interrupted'
+
+// Interrupt running process
+await handle.interrupt()
+```
+
+### Circuit Breaker
+```typescript
+import { CircuitBreaker } from './src/harness/blocking/CircuitBreaker.js'
+
+const breaker = new CircuitBreaker({
+  maxSteps: 100,
+  maxRetriesPerTask: 5,
+  loopDetectionWindow: 10,
+  loopThreshold: 3
+})
+
+// Record each step
+const check = breaker.recordStep('edit file.ts', 'Edit')
+if (check.shouldStop) {
+  console.log('Circuit breaker triggered:', check.reason)
+}
+
+// Track retries
+const retry = breaker.recordRetry('task-id')
+if (retry.shouldStop) {
+  // Task added to dead letter queue
+}
+```
+
+## 9. Security
+
+```typescript
+import { SecurityValidator } from './src/security/SecurityValidator.js'
+
+const security = new SecurityValidator()
+
+// Validate input
+const check = security.validateInput('rm -rf /')
+console.log(check.valid)      // false
+console.log(check.severity)   // 'critical'
+
+// Validate commands
+const cmdCheck = security.validateCommand('ls', ['-la'])
+console.log(cmdCheck.valid)   // true
+
+// Rate limiting
+const rateCheck = security.checkRateLimit(1000, 0.01)
+console.log(rateCheck.valid)  // true (within limits)
+
+// Tool permissions
+security.setPermission('custom-tool', {
+  toolName: 'custom-tool',
+  level: 'execute',
+  maxInvocationsPerMinute: 10
+})
+```
+
+## 10. Plugins
+
+### Use Built-in Plugins
+```typescript
+import { PluginMarketplace } from './plugins/marketplace.js'
+
+const marketplace = new PluginMarketplace()
+
+// Search plugins
+const plugins = marketplace.search('git')
+
+// List all
+const all = marketplace.list()
+```
+
+### Create Custom Plugin
+```typescript
+import type { PluginV2 } from './src/plugins/types.js'
 
 export const myPlugin: PluginV2 = {
   manifest: {
     id: 'my-plugin',
     name: 'My Plugin',
     version: '1.0.0',
-    description: 'A custom plugin'
+    description: 'Does something useful'
   },
   status: 'installed',
-  tools: [/* custom tools */],
-  commands: [/* custom commands */],
+  tools: [
+    {
+      name: 'my-tool',
+      description: 'Does something',
+      inputSchema: { type: 'object' }
+    }
+  ],
+  commands: [
+    {
+      name: 'my-command',
+      description: 'Run my command',
+      handler: async (args) => {
+        console.log('Running...')
+      }
+    }
+  ],
   async onActivate(context) {
     context.logger.info('Plugin activated')
+    context.storage.set('initialized', true)
   }
 }
 ```
 
-## 常见问题
+## 11. Error Handling & Self-Correction
 
-**Q: 如何切换默认 provider?**
+```typescript
+import { SelfCorrectingRecovery, ErrorReporter } from './src/context/SelfCorrectingRecovery.js'
 
-编辑 `~/.agent-cli/config.json` 中的 `defaultProvider` 字段。
+const recovery = new SelfCorrectingRecovery()
+const reporter = new ErrorReporter()
 
-**Q: 支持哪些模型?**
+// Report error
+const error = new ProviderAuthError('anthropic')
+reporter.report(error)
 
-运行 `bun run src/cli/index.ts models` 查看完整列表。
+// Analyze and get fix suggestions
+const analysis = recovery.analyzeError(error)
+console.log(analysis.rootCause)
+console.log(analysis.suggestions)
+console.log(analysis.autoFixable)
 
-**Q: 如何自定义 API 端点?**
+// Generate readable report
+console.log(recovery.formatAnalysis(analysis))
+```
 
-在配置的 provider 中添加 `baseUrl` 字段：
+## 12. Cloud Sync
 
-```json
-{
-  "providers": {
-    "openai": {
-      "apiKey": "sk-...",
-      "baseUrl": "https://your-proxy.com/v1"
-    }
-  }
+```typescript
+import { SyncManager } from './src/sync/SyncManager.js'
+
+const sync = new SyncManager({
+  remoteUrl: 'https://sync.example.com',
+  conflictStrategy: 'local_wins',
+  autoSync: true
+})
+
+// Set sync provider (implement SyncProvider interface)
+sync.setProvider(mySyncProvider)
+
+// Register local data
+sync.registerLocal('config', JSON.stringify(config))
+sync.registerLocal('memory', JSON.stringify(memoryData))
+
+// Sync
+const result = await sync.sync('bidirectional')
+console.log(`Pushed: ${result.pushed}, Pulled: ${result.pulled}`)
+
+// Resolve conflicts
+if (result.conflicts > 0) {
+  sync.resolveConflict('config', true) // use local
 }
 ```
+
+## 13. Performance Monitoring
+
+```typescript
+import { PerformanceMetrics } from './src/optimization/PerformanceOptimizer.js'
+
+const metrics = new PerformanceMetrics()
+
+// Track operations
+const stop = metrics.startTimer('api-call')
+// ... do work ...
+const elapsed = stop()
+
+// Track counters
+metrics.increment('requests')
+metrics.increment('tokens', 1500)
+
+// Get metrics
+const report = metrics.getAllMetrics()
+console.log(report.timings['api-call'])
+// { count, min, max, avg, p95 }
+```
+
+## 14. Shell Completions
+
+```bash
+# Bash
+source completions/agent.bash
+
+# Zsh
+source completions/agent.zsh
+
+# Fish
+source completions/agent.fish
+```
+
+## 15. Docker
+
+```bash
+# Build
+docker build -t agent-cli .
+
+# Run
+docker run -it agent-cli chat "Hello"
+docker run -it agent-cli repl
+```
+
+## 16. CI/CD
+
+The project includes GitHub Actions workflow (`.github/workflows/ci.yml`):
+- Runs on push/PR to main
+- Tests with Bun 1.0 and 1.1
+- Runs typecheck and all tests
+
+---
+
+**Full documentation:** https://github.com/wadeann/agent-cli  
+**Issues:** https://github.com/wadeann/agent-cli/issues

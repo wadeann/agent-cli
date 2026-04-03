@@ -31,7 +31,10 @@ function loadConfig(): CLIConfig {
     const defaultConfig: CLIConfig = {
       defaultProvider: 'anthropic',
       defaultModel: 'claude-sonnet-4-5-20251120',
-      providers: {},
+      providers: {
+        anthropic: {},
+        openai: {}
+      },
       modelPreferences: {
         fast: 'claude-haiku-3-5-20250520',
         balanced: 'claude-sonnet-4-5-20251120',
@@ -159,9 +162,34 @@ program
       const profile = key.split('.')[1]
       if (!config.modelPreferences) config.modelPreferences = {}
       config.modelPreferences[profile as keyof ModelPreference] = value
+    } else if (key.startsWith('provider.')) {
+      const parts = key.split('.')
+      const providerName = parts[1]
+      const setting = parts[2]
+      if (!config.providers[providerName]) config.providers[providerName] = {}
+      if (setting === 'apiKey') {
+        config.providers[providerName].apiKey = value
+      } else if (setting === 'baseUrl') {
+        config.providers[providerName].baseUrl = value
+      } else if (setting === 'timeout') {
+        config.providers[providerName].timeout = parseInt(value, 10)
+      } else if (setting === 'maxRetries') {
+        config.providers[providerName].maxRetries = parseInt(value, 10)
+      } else {
+        console.error(`Unknown provider setting: ${setting}`)
+        console.log('Available settings: apiKey, baseUrl, timeout, maxRetries')
+        process.exit(1)
+      }
     } else {
       console.error(`Unknown config key: ${key}`)
-      console.log('Available keys: provider, model, model.fast, model.balanced, model.power')
+      console.log('Available keys:')
+      console.log('  provider                    - Set default provider')
+      console.log('  model                       - Set default model')
+      console.log('  model.fast|balanced|power   - Set profile model')
+      console.log('  provider.<name>.apiKey      - Set provider API key')
+      console.log('  provider.<name>.baseUrl     - Set provider base URL')
+      console.log('  provider.<name>.timeout     - Set provider timeout (ms)')
+      console.log('  provider.<name>.maxRetries  - Set provider max retries')
       process.exit(1)
     }
     saveConfig(config)
@@ -224,12 +252,17 @@ program
 const args = process.argv.slice(2)
 if (args.length === 0) {
   console.log('AI Agent CLI v0.1.0')
-  console.log('Usage: agent chat "your prompt"')
-  console.log('       agent repl              # Interactive TUI mode')
-  console.log('       agent models')
-  console.log('       agent config')
-  console.log('       agent config set model <model-id>')
-  console.log('       agent chat "hello" -p fast|balanced|power')
+  console.log('Usage:')
+  console.log('  agent chat "your prompt"')
+  console.log('  agent chat "hello" -m gpt-4o')
+  console.log('  agent chat "hello" -p fast|balanced|power')
+  console.log('  agent repl              # Interactive TUI mode')
+  console.log('  agent models')
+  console.log('  agent config')
+  console.log('  agent config set provider openai')
+  console.log('  agent config set model gpt-4o')
+  console.log('  agent config set provider.anthropic.apiKey sk-ant-...')
+  console.log('  agent config set provider.openai.baseUrl https://proxy.example.com/v1')
 } else {
   program.parse(process.argv)
 }
